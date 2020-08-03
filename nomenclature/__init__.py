@@ -167,6 +167,12 @@ def _get_timestamp_for_subannual(a, year):
         return False
 
 def _validate_time_column(timestamp):
-    return isinstance(timestamp, datetime)
-
+    strings = timestamp.split('+')
+    if strings[1] == '01:00':
+        try:
+            return isinstance(datetime.strptime(strings[0], '%Y-%m-%dT%H:%M:%S'), datetime)
+        except Exception:
+            return False
+    else:
+        return False
 
