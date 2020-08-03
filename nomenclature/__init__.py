@@ -170,7 +170,7 @@ def _validate_time_column(timestamp):
     strings = timestamp.split('+')
     if strings[1] == '01:00':
         try:
-            return isinstance(datetime.strptime(strings[0], '%Y-%m-%dT%H:%M:%S'), datetime)
+            return isinstance(datetime.strptime(strings[0], '%Y-%m-%dT%H:%M'), datetime)
         except Exception:
             return False
     else:
