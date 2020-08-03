@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 import yaml
 from pyam import IamDataFrame
+from datetime import datetime
 
 # set up logging formatting
 logger = logging.getLogger(__name__)
@@ -102,8 +103,16 @@ def validate(df):
         ('region', regions, 's'),
         ('variable', variables, 's')
     ]
+
+    # add 'subannual' (wide format) or 'time' (long format) to list to validate
     if 'subannual' in df.data.columns:
         cols.append(('subannual', subannual, ' timeslices'))
+        # get (one) year from columns to validate datetime
+        year = df.data.year[0]
+    elif 'time' in df.data.columns:
+        cols.append(('time', time, 'timeslices'))
+
+
 
     # iterate over dimensions and perform validation
     msg = 'The following {} are not defined in the nomenclature:\n    {}'
@@ -113,6 +122,12 @@ def validate(df):
         # check the entries in the invalid list related to directional data
         if col == 'region':
             invalid = [i for i in invalid if not _validate_directional(i)]
+
+        if col == 'subannual':
+            invalid = [c for c in df.data[col] if not _get_timestamp_for_subannual(c, year)]
+
+        if col == 'time':
+            invalid = [c for c in df.data[col] if not _validate_time_column(c)]
 
         # check if any entries in the column are invalid and write to log
         if invalid:
@@ -126,3 +141,32 @@ def _validate_directional(x):
     """Utility function to check whether region-to-region code is valid"""
     x = x.split('>')
     return len(x) == 2 and all([i in regions for i in x])
+
+def _get_timestamp_for_subannual(a, year):
+    try:
+        month = a[0:2]
+        a = a.split('-')[1]
+        day = a[0:2]
+        if 'T' in a:
+            timestamp = a.split('T')[1].split('+')[0]
+            hour = timestamp.split(':')[0]
+            minute = timestamp.split(':')[1]
+            second = 0
+            if timestamp.count(':') == 2:
+                second = timestamp.split(':')[2]
+        else:
+            hour = minute = second = 0
+
+        if '+' + a.split('+')[1] == '+01:00':
+            ts = datetime(int(year), int(month), int(day), int(hour),
+                          int(minute), int(second))
+            return isinstance(ts, datetime)
+        else:
+            return False
+    except Exception:
+        return False
+
+def _validate_time_column(timestamp):
+    return isinstance(timestamp, datetime)
+
+

@@ -31,3 +31,21 @@ def test_validate_directional():
 
     # test that directional data with more than one `>` fails
     assert not validate(df.rename(region={'Europe': 'Austria>Italy>France'}))
+
+
+def test_validate_subannual():
+    # test that validation works as expected with sub-annual column (wide format)
+    assert validate(df.insert("subannual", ['01-01T00:00+01:00'], True))
+    assert not validate(df.insert("subannual", ['01-01T00:00+02:00'], True))
+    assert not validate(df.insert("subannual", ['20-01T00:00+02:00'], True))
+    assert not validate(df.insert("subannual", ['20-01T0000+02:00'], True))
+
+
+def test_validate_time():
+    # test that validation works as expected with 'time' column (long format)
+    assert validate(df.insert("time", ['2020-01-01T00:00+01:00'], True))
+    assert not validate(df.insert("time", ['0-01-01T00:00+02:00'], True))
+    assert not validate(df.insert("time", ['2020-01-01T00:00+02:00'], True))
+
+
+
