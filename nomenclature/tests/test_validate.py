@@ -6,12 +6,15 @@ from nomenclature import validate
 TEST_DF = pd.DataFrame([
     ['model_a', 'scen_a', 'Europe', 'Primary Energy', 'EJ/yr', 1, 6.],
 ],
-    columns=['model', 'scenario', 'region', 'variable', 'unit', 2005, 2010]
-)
-
-
+    columns=['model', 'scenario', 'region', 'variable', 'unit', 2005, 2010])
 df = IamDataFrame(TEST_DF)
 
+
+TEST_DF_2 = TEST_DF.insert("subannual", ['01-01T00:00+01:00'], True)
+df2 = IamDataFrame(TEST_DF_2)
+
+TEST_DF_3 = TEST_DF.insert("time", ['2020-01-01T00:00+01:00'], True)
+df3 = IamDataFrame(TEST_DF_3)
 
 
 def test_validate():
@@ -36,21 +39,15 @@ def test_validate_directional():
 
 def test_validate_subannual():
     # test that validation works as expected with sub-annual column (wide format)
-    df_sub_annual = pd.DataFrame(["subannual"], columns=['01-01T00:00+01:00'])
-    df_test = IamDataFrame(df_sub_annual)
-    df_test = df_test.append(df)
-    assert validate(df_test)
-    assert not validate(df_test.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
-    assert not validate(df_test.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
-    assert not validate(df_test.rename(subannual={'01-01T00:00+02:00':'20-01T0000+02:00'}))
+    assert validate(df2)
+    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
+    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
+    assert not validate(df2.rename(subannual={'01-01T00:00+02:00':'20-01T0000+02:00'}))
 
 
 def test_validate_time():
     # test that validation works as expected with 'time' column (long format)
-    df_time = pd.DataFrame(["time"], columns=['2020-01-01T00:00+01:00'])
-    df_test = IamDataFrame(df_time)
-    df_test = df.append(df)
-    assert not validate(df_test)
+    assert not validate(df3)
     assert not validate(df_test.rename(time={'2020-01-01T00:00+01:00':'2020-01-01T00:00+02:00'}))
     assert validate(df_test.rename(time={'2020-01-01T00:00+02:00':'2020-01-01T00:00+01:00'}))
     
