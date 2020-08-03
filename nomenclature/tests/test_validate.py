@@ -48,8 +48,8 @@ def test_validate_subannual():
 def test_validate_time():
     # test that validation works as expected with 'time' column (long format)
     assert not validate(df3)
-    assert not validate(df_test.rename(time={'2020-01-01T00:00+01:00':'2020-01-01T00:00+02:00'}))
-    assert validate(df_test.rename(time={'2020-01-01T00:00+02:00':'2020-01-01T00:00+01:00'}))
+    assert not validate(df3.rename(time={'2020-01-01T00:00+01:00':'2020-01-01T00:00+02:00'}))
+    assert validate(df3.rename(time={'2020-01-01T00:00+02:00':'2020-01-01T00:00+01:00'}))
     
 
 
