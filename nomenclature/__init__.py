@@ -106,11 +106,11 @@ def validate(df):
 
     # add 'subannual' (wide format) or 'time' (long format) to list to validate
     if 'subannual' in df.data.columns:
-        cols.append(('subannual', subannual, ' timeslices'))
+        cols.append(('subannual', 'True', ' timeslices'))
         # get (one) year from columns to validate datetime
         year = df.data.year[0]
     elif 'time' in df.data.columns:
-        cols.append(('time', time, 'timeslices'))
+        cols.append(('time', 'True', 'timeslices'))
 
 
 
