@@ -37,7 +37,7 @@ def test_validate_directional():
 def test_validate_subannual():
     # test that validation works as expected with sub-annual column (wide format)
     DF = pd.DataFrame(["subannual"], columns=['01-01T00:00+01:00'])
-    df_test = IamDataFrame(DF))
+    df_test = IamDataFrame(DF)
     df_test = df_test.append(df)
     assert validate(df)
     assert not validate(df.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
@@ -48,7 +48,7 @@ def test_validate_subannual():
 def test_validate_time():
     # test that validation works as expected with 'time' column (long format)
     DF = pd.DataFrame(["time"], columns=['2020-01-01T00:00+01:00'])
-    df_test = IamDataFrame(DF))
+    df_test = IamDataFrame(DF)
     df = df.append(df_test)
     assert not validate(df)
     assert not validate(df.rename(time={'2020-01-01T00:00+01:00':'2020-01-01T00:00+02:00'}))
