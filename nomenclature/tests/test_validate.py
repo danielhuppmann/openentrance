@@ -38,7 +38,7 @@ def test_validate_directional():
 def test_validate_subannual():
     # test that validation works as expected with sub-annual column (wide format)
     assert validate(df2)
-#    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
+    assert not validate(df2.rename(subannual={'01-01T00:00+01:00' : '01-01T00:00+02:00'}))
 #    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'01-01T00:00+02:00'}))
 #    assert not validate(df2.rename(subannual={'01-01T00:00+02:00':'20-01T0000+02:00'}))
 
