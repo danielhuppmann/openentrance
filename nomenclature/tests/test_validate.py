@@ -37,7 +37,7 @@ def test_validate_subannual_months():
     assert not validate(IamDataFrame(TEST_DF, subannual='foo'))
 
 
-def test_validate_subannual_utc():
+def test_validate_subannual_datetime_as_subannual():
     # test that validation works as expected with continuous time as subannual
     assert validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+01:00'))
 
