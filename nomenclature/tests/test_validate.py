@@ -42,18 +42,15 @@ def test_validate_subannual_months():
     assert not validate(IamDataFrame(TEST_DF, subannual='foo'))
 
 
-def test_validate_subannual():
-    # test that validation works as expected with sub-annual column (wide format)
-    assert validate(df2)
-    assert not validate(df2.rename(subannual={'01-01T00:00+01:00' : '01-01T00:00+02:00'}))
-    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'20-01T00:00:10+01:00'}))
-    assert validate(df2.rename(subannual={'01-01T00:00+01:00': '12-01T00:00:10+01:00'}))
+def test_validate_subannual_utc():
+    # test that validation works as expected with continuous time as subannual
+    assert validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+01:00'))
 
+    # assert that missing timezone fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00'))
 
-def test_validate_time():
-    # test that validation works as expected with 'time' column (long format)
-    assert validate(df3)
-    assert not validate(df3.rename(time={'2020-01-01T00:00+01:00' : '2020-01-01T00:00+02:00'}))
-    assert not validate(df3.rename(time={'2020-01-01T00:00+01:00' : '0-01-01T00:00+01:00'}))
+    # assert that wrong timezone fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+02:00'))
 
-
+    # assert that value not castable to datetime fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-32T00:00+01:00'))
