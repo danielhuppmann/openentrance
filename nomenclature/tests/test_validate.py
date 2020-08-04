@@ -9,11 +9,6 @@ TEST_DF = pd.DataFrame([
     columns=['model', 'scenario', 'region', 'variable', 'unit', 2005, 2010])
 df = IamDataFrame(TEST_DF)
 
-TEST_DF2 = pd.DataFrame(['01-01T00:00+01:00'], columns=['subannual'])
-TEST_DF3 = pd.DataFrame(['2020-01-01T00:00+01:00'], columns=['time'])
-df2 = IamDataFrame(TEST_DF.join(TEST_DF2))
-df3 = IamDataFrame(TEST_DF.join(TEST_DF3))
-
 
 def test_validate():
     # test simple validation
