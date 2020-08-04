@@ -35,6 +35,13 @@ def test_validate_directional():
     assert not validate(df.rename(region={'Europe': 'Austria>Italy>France'}))
 
 
+def test_validate_subannual_months():
+    # test that validation works as expected with months
+    # (and representative timeslices generally)
+    assert validate(IamDataFrame(TEST_DF, subannual='January'))
+    assert not validate(IamDataFrame(TEST_DF, subannual='foo'))
+
+
 def test_validate_subannual():
     # test that validation works as expected with sub-annual column (wide format)
     assert validate(df2)
