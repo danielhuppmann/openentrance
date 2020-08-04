@@ -9,11 +9,6 @@ TEST_DF = pd.DataFrame([
     columns=['model', 'scenario', 'region', 'variable', 'unit', 2005, 2010])
 df = IamDataFrame(TEST_DF)
 
-TEST_DF2 = pd.DataFrame(['01-01T00:00+01:00'], columns=['subannual'])
-TEST_DF3 = pd.DataFrame(['2020-01-01T00:00+01:00'], columns=['time'])
-df2 = IamDataFrame(TEST_DF.join(TEST_DF2))
-df3 = IamDataFrame(TEST_DF.join(TEST_DF3))
-
 
 def test_validate():
     # test simple validation
@@ -35,18 +30,22 @@ def test_validate_directional():
     assert not validate(df.rename(region={'Europe': 'Austria>Italy>France'}))
 
 
-def test_validate_subannual():
-    # test that validation works as expected with sub-annual column (wide format)
-    assert validate(df2)
-    assert not validate(df2.rename(subannual={'01-01T00:00+01:00' : '01-01T00:00+02:00'}))
-    assert not validate(df2.rename(subannual={'01-01T00:00+01:00':'20-01T00:00:10+01:00'}))
-    assert validate(df2.rename(subannual={'01-01T00:00+01:00': '12-01T00:00:10+01:00'}))
+def test_validate_subannual_months():
+    # test that validation works as expected with months
+    # (and representative timeslices generally)
+    assert validate(IamDataFrame(TEST_DF, subannual='January'))
+    assert not validate(IamDataFrame(TEST_DF, subannual='foo'))
 
 
-def test_validate_time():
-    # test that validation works as expected with 'time' column (long format)
-    assert validate(df3)
-    assert not validate(df3.rename(time={'2020-01-01T00:00+01:00' : '2020-01-01T00:00+02:00'}))
-    assert not validate(df3.rename(time={'2020-01-01T00:00+01:00' : '0-01-01T00:00+01:00'}))
+def test_validate_subannual_datetime_as_subannual():
+    # test that validation works as expected with continuous time as subannual
+    assert validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+01:00'))
 
+    # assert that missing timezone fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00'))
 
+    # assert that wrong timezone fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+02:00'))
+
+    # assert that value not castable to datetime fails
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-32T00:00+01:00'))

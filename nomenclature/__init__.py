@@ -106,28 +106,37 @@ def validate(df):
 
     # add 'subannual' (wide format) or 'time' (long format) to list to validate
     if 'subannual' in df.data.columns:
-        cols.append(('subannual', 'True', ' timeslices'))
-        # get (one) year from columns to validate datetime
-        year = df.data.year[0]
+        cols.append(('subannual', subannual, ' timeslices'))
     elif 'time' in df.data.columns:
         cols.append(('time', 'True', 'timeslices'))
-
-
 
     # iterate over dimensions and perform validation
     msg = 'The following {} are not defined in the nomenclature:\n    {}'
     for col, codelist, ext in cols:
         invalid = [c for c in df.data[col].unique() if c not in codelist]
 
-        # check the entries in the invalid list related to directional data
-        if col == 'region':
+        # check if entries in the invalid list are related to directional data
+        if col == 'region' and invalid:
             invalid = [i for i in invalid if not _validate_directional(i)]
 
-        if col == 'subannual':
-            invalid = [c for c in df.data[col] if not _get_timestamp_for_subannual(c, year)]
+        # check if entries in the invalid list for subannual are datetime
+        if col == 'subannual' and invalid:
 
-        if col == 'time':
-            invalid = [c for c in df.data[col] if not _validate_time_column(c)]
+            # downselect to any data that might be invalid
+            data = df.filter(subannual=invalid)\
+                .data[['year', 'subannual']].drop_duplicates()
+
+            # call utility whether subannual can be cast to datetime
+            valid_dt, invalid_tz, invalid = _validate_subannual_dt(
+                list(zip(data['year'], data['subannual']))
+            )
+
+            # verify that all datetime-instances have the correct timezone
+            if invalid_tz or \
+                    any([t.tzname() != 'UTC+01:00' for t in valid_dt]):
+                success = False
+                logger.warning('Time is not given in Central European time'
+                               ' (UTC+01:00)!')
 
         # check if any entries in the column are invalid and write to log
         if invalid:
@@ -142,37 +151,17 @@ def _validate_directional(x):
     x = x.split('>')
     return len(x) == 2 and all([i in regions for i in x])
 
-def _get_timestamp_for_subannual(a, year):
-    try:
-        month = a[0:2]
-        a = a.split('-')[1]
-        day = a[0:2]
-        if 'T' in a:
-            timestamp = a.split('T')[1].split('+')[0]
-            hour = timestamp.split(':')[0]
-            minute = timestamp.split(':')[1]
-            second = 0
-            if timestamp.count(':') == 2:
-                second = timestamp.split(':')[2]
-        else:
-            hour = minute = second = 0
 
-        if '+' + a.split('+')[1] == '+01:00':
-            ts = datetime(int(year), int(month), int(day), int(hour),
-                          int(minute), int(second))
-            return isinstance(ts, datetime)
-        else:
-            return False
-    except Exception:
-        return False
-
-def _validate_time_column(timestamp):
-    strings = timestamp.split('+')
-    if strings[1] == '01:00':
-        try:
-            return isinstance(datetime.strptime(strings[0], '%Y-%m-%dT%H:%M'), datetime)
-        except Exception:
-            return False
-    else:
-        return False
-
+def _validate_subannual_dt(x):
+    """Utility function to separate and validate datetime format"""
+    valid_dt, invalid_tz, invalid = [], False, set()
+    for (y, s) in x:
+        try:  # casting to Central European datetime
+            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%dT%H:%M%z'))
+        except ValueError:
+            try:  # casting to UTC datetime
+                datetime.strptime(f'{y}-{s}', '%Y-%m-%dT%H:%M')
+                invalid_tz = True
+            except ValueError:  # if casting to datetime fails, return invalid
+                invalid.add(s)
+    return valid_dt, invalid_tz, list(invalid)
