@@ -15,7 +15,7 @@ df = IamDataFrame(TEST_DF)
 def test_transformation_IamDataFrame():
     # test transformation (cast) from IamDataFrame
     to_test = time_to_year_subannual(df).as_pandas()
-    assert (to_test['year'] [0]==2015 and to_test['subannual'][0]=='01-01 00:00:00+01:00')
+    assert (to_test['year'][0]==2015 and to_test['subannual'][0]=='01-01 00:00:00+01:00')
 
 
 
