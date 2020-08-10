@@ -1,6 +1,6 @@
 import pandas as pd
 from pyam import IamDataFrame
-from nomenclature import time_to_year_subannual
+from transform_IamDataFrame import time_to_year_subannual
 
 
 TEST_DF = pd.DataFrame([
