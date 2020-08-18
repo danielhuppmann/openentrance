@@ -1,6 +1,8 @@
 from pathlib import Path
 import logging
 import yaml
+
+import pandas as pd
 from pyam import IamDataFrame
 from datetime import datetime
 
@@ -167,27 +169,14 @@ def _validate_subannual_dt(x):
     return valid_dt, invalid_tz, list(invalid)
     
     
-def time_to_year_subannual(pyam_df):
-    # generate pandas dataframe from IamDataFrame class
-    pandas_df = pyam_df.as_pandas()
-    
-    # save time column (i.e., 2015-01-01T00:00:00+01:00) 
-    # as 'year' (2015) and 'subannual' (01-01T00:00:00+01:00) column
-    years=[]
-    subannual=[]
-    
-    for index, row in pandas_df.iterrows():
-        years.append(row['time'].year)
-        subannual.append(str(row['time']).
-                         replace(str(row['time'].year)+'-',''))
-    pandas_df['year']=years
-    pandas_df['subannual']=subannual
-        
-    # clean dataframe from invalid columns
-    valid_columns = ['model', 'scenario', 'region', 
-          'variable', 'unit', 'value', 'year', 'subannual']
-    for c in pandas_df.columns:
-        if c not in valid_columns:
-            pandas_df.pop(c)
-    
-    return IamDataFrame(pandas_df)
+def swap_time_for_subannual(df):
+    """Convert an IamDataFrame with `datetime` domain to `year + subannual`"""
+    if df.time_col != 'time':
+        raise ValueError('The IamDataFrame does not have `datetime` domain!')
+
+    _data = df.data
+    _data['year'] = [x.year for x in _data.time]
+    _data['subannual'] = [x.strftime('%m-%dT%H:%M%z') for x in _data.time]
+    _data.drop(columns='time', inplace=True)
+
+    return IamDataFrame(_data)
