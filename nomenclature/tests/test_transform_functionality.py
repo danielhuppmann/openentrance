@@ -1,6 +1,6 @@
 import pandas as pd
 from pyam import IamDataFrame
-from nomenclature import time_to_year_subannual
+from nomenclature import swap_time_for_subannual
 
 
 TEST_DF = pd.DataFrame([
@@ -12,10 +12,10 @@ TEST_DF = pd.DataFrame([
 df = IamDataFrame(TEST_DF)
 
 
-def test_transformation_IamDataFrame():
-    # test transformation (cast) from IamDataFrame
-    to_test = time_to_year_subannual(df).as_pandas()
-    assert (to_test['year'][0]==2015 and to_test['subannual'][0]=='01-01 00:00:00+01:00')
+def test_swap_time_for_subannual():
+    # test transforming of IamDataFrame in datetime domain to year + subannual
+    obs = swap_time_for_subannual(df)
+    assert (obs['year'][0] == 2015 and obs['subannual'][0] == '01-01T00:00+0100')
 
 
 
