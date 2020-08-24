@@ -39,13 +39,13 @@ def test_validate_subannual_months():
 
 def test_validate_subannual_datetime_as_subannual():
     # test that validation works as expected with continuous time as subannual
-    assert validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+01:00'))
+    assert validate(IamDataFrame(TEST_DF, subannual='01-01 00:00:00+01:00'))
 
     # assert that missing timezone fails
-    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00'))
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01 00:00:00'))
 
     # assert that wrong timezone fails
-    assert not validate(IamDataFrame(TEST_DF, subannual='01-01T00:00+02:00'))
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-01 00:00:00+02:00'))
 
     # assert that value not castable to datetime fails
-    assert not validate(IamDataFrame(TEST_DF, subannual='01-32T00:00+01:00'))
+    assert not validate(IamDataFrame(TEST_DF, subannual='01-32 00:00:00+01:00'))

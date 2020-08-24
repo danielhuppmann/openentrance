@@ -96,6 +96,11 @@ def validate(df):
     """
     if not isinstance(df, IamDataFrame):
         df = IamDataFrame(df)
+
+    # Change column structure to required format (including 'year' and 'subannual')
+    if 'time' in df.data.columns:
+        df = time_to_year_subannual(df)
+
     success = True
 
     # set up list of dimension (columns) to validate (`subannual` is optional)
@@ -104,11 +109,11 @@ def validate(df):
         ('variable', variables, 's')
     ]
 
-    # add 'subannual' (wide format) or 'time' (long format) to list to validate
+    # add 'subannual' to validation list
     if 'subannual' in df.data.columns:
         cols.append(('subannual', subannual, ' timeslices'))
-    elif 'time' in df.data.columns:
-        cols.append(('time', 'True', 'timeslices'))
+#    elif 'time' in df.data.columns:
+#        cols.append(('time', 'True', 'timeslices'))
 
     # iterate over dimensions and perform validation
     msg = 'The following {} are not defined in the nomenclature:\n    {}'
@@ -156,11 +161,11 @@ def _validate_subannual_dt(x):
     """Utility function to separate and validate datetime format"""
     valid_dt, invalid_tz, invalid = [], False, set()
     for (y, s) in x:
-        try:  # casting to Central European datetime
-            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%dT%H:%M%z'))
+        try:  # casting to Central European datetime (including 'T' in format)
+            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M:%S%z'))
         except ValueError:
             try:  # casting to UTC datetime
-                datetime.strptime(f'{y}-{s}', '%Y-%m-%dT%H:%M')
+                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%S')
                 invalid_tz = True
             except ValueError:  # if casting to datetime fails, return invalid
                 invalid.add(s)
@@ -170,7 +175,7 @@ def _validate_subannual_dt(x):
 def time_to_year_subannual(pyam_df):
     # generate pandas dataframe from IamDataFrame class
     pandas_df = pyam_df.as_pandas()
-    
+
     # save time column (i.e., 2015-01-01T00:00:00+01:00) 
     # as 'year' (2015) and 'subannual' (01-01T00:00:00+01:00) column
     years=[]
@@ -191,3 +196,6 @@ def time_to_year_subannual(pyam_df):
             pandas_df.pop(c)
     
     return IamDataFrame(pandas_df)
+
+
+
