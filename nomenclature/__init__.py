@@ -191,7 +191,7 @@ def swap_time_for_subannual(df):
     return IamDataFrame(_data)
 
 
-def validate_time_dt(x):
+def _validate_time_dt(x):
     """Utility function to validate datetime and timezone format"""
     valid_time, invalid_time, invalid = [], False, []
     for e in x:
@@ -201,7 +201,6 @@ def validate_time_dt(x):
             invalid_time = True
             invalid.append(str(e))
     return valid_time, invalid_time, invalid
-
 
 
 
