@@ -111,7 +111,8 @@ def validate(df):
 
     # add 'subannual' (wide format) or 'time' (long format) to list to validate
     if 'time' in df.data.columns:
-        if (validate_time_dt(df.data.time))[1]:
+        valid, bool, invalid = validate_time_dt(df.data.time)
+        if bool:
             df = swap_time_for_subannual(df)
         else:
             success = False
