@@ -1,6 +1,6 @@
 import pandas as pd
 from pyam import IamDataFrame
-from nomenclature import validate_time_dt
+from nomenclature import _validate_time_dt
 from nomenclature import validate
 
 
@@ -13,12 +13,9 @@ df = IamDataFrame(TEST_DF)
 
 
 def test_validate_time_dt():
-    valid, bool, invalid = validate_time_dt(df.data.time)
+    valid, bool, invalid = _validate_time_dt(df.data.time)
     assert bool == True
 
 
 def test_validate_time_entry():
     assert validate(df)
-
-
-
