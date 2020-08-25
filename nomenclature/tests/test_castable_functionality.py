@@ -13,8 +13,7 @@ df = IamDataFrame(TEST_DF)
 
 
 def test_validate_time_dt():
-    valid, bool, invalid = _validate_time_dt(df.data.time)
-    assert bool == True
+    assert _validate_time_dt(df.data.time)
 
 
 def test_validate_time_entry():
