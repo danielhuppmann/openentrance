@@ -201,15 +201,3 @@ def _validate_time_dt(x):
             invalid_time = True
             invalid.append(str(e))
     return valid_time, invalid_time, invalid
-
-
-
-
-
-
-
-
-
-
-
-
