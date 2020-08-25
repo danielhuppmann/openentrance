@@ -1,8 +1,11 @@
 from pathlib import Path
 import logging
 import yaml
+
+import pandas as pd
 from pyam import IamDataFrame
 from datetime import datetime
+
 
 # set up logging formatting
 logger = logging.getLogger(__name__)
@@ -96,12 +99,9 @@ def validate(df):
     """
     if not isinstance(df, IamDataFrame):
         df = IamDataFrame(df)
-
-    # Change column structure to required format (including 'year' and 'subannual')
-    if 'time' in df.data.columns:
-        df = time_to_year_subannual(df)
-
     success = True
+
+    msg = 'The following {} are not defined in the nomenclature:\n    {}'
 
     # set up list of dimension (columns) to validate (`subannual` is optional)
     cols = [
@@ -109,14 +109,19 @@ def validate(df):
         ('variable', variables, 's')
     ]
 
-    # add 'subannual' to validation list
+    # add 'subannual' (wide format) or 'time' (long format) to list to validate
+    if 'time' in df.data.columns:
+        if (validate_time_dt(df.data.time))[1]:
+            df = swap_time_for_subannual(df)
+        else:
+            success = False
+            logger.warning(msg.format('entries in time column', invalid))
+
+
     if 'subannual' in df.data.columns:
         cols.append(('subannual', subannual, ' timeslices'))
-#    elif 'time' in df.data.columns:
-#        cols.append(('time', 'True', 'timeslices'))
 
-    # iterate over dimensions and perform validation
-    msg = 'The following {} are not defined in the nomenclature:\n    {}'
+
     for col, codelist, ext in cols:
         invalid = [c for c in df.data[col].unique() if c not in codelist]
 
@@ -161,41 +166,50 @@ def _validate_subannual_dt(x):
     """Utility function to separate and validate datetime format"""
     valid_dt, invalid_tz, invalid = [], False, set()
     for (y, s) in x:
-        try:  # casting to Central European datetime (including 'T' in format)
-            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M:%S%z'))
+        try:  # casting to Central European datetime
+            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%z'))
         except ValueError:
             try:  # casting to UTC datetime
-                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%S')
+                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M')
                 invalid_tz = True
             except ValueError:  # if casting to datetime fails, return invalid
                 invalid.add(s)
     return valid_dt, invalid_tz, list(invalid)
     
     
-def time_to_year_subannual(pyam_df):
-    # generate pandas dataframe from IamDataFrame class
-    pandas_df = pyam_df.as_pandas()
+def swap_time_for_subannual(df):
+    """Convert an IamDataFrame with `datetime` domain to `year + subannual`"""
+    if df.time_col != 'time':
+        raise ValueError('The IamDataFrame does not have `datetime` domain!')
 
-    # save time column (i.e., 2015-01-01T00:00:00+01:00) 
-    # as 'year' (2015) and 'subannual' (01-01T00:00:00+01:00) column
-    years=[]
-    subannual=[]
-    
-    for index, row in pandas_df.iterrows():
-        years.append(row['time'].year)
-        subannual.append(str(row['time']).
-                         replace(str(row['time'].year)+'-',''))
-    pandas_df['year']=years
-    pandas_df['subannual']=subannual
-        
-    # clean dataframe from invalid columns
-    valid_columns = ['model', 'scenario', 'region', 
-          'variable', 'unit', 'value', 'year', 'subannual']
-    for c in pandas_df.columns:
-        if c not in valid_columns:
-            pandas_df.pop(c)
-    
-    return IamDataFrame(pandas_df)
+    _data = df.data
+    _data['year'] = [x.year for x in _data.time]
+    _data['subannual'] = [x.strftime('%m-%d %H:%M%z') for x in _data.time]
+    _data.drop(columns='time', inplace=True)
+
+    return IamDataFrame(_data)
+
+
+def validate_time_dt(x):
+    """Utility function to validate datetime and timezone format"""
+    valid_time, invalid_time, invalid = [], False, []
+    for e in x:
+        if type(e) == datetime and str(e.utcoffset()) == '1:00:00':
+            valid_time.append(e)
+        else:
+            invalid_time = True
+            invalid.append(str(e))
+    return valid_time, invalid_time, invalid
+
+
+
+
+
+
+
+
+
+
 
 
 
