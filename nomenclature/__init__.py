@@ -4,7 +4,7 @@ import yaml
 
 import pandas as pd
 from pyam import IamDataFrame
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # set up logging formatting
@@ -108,21 +108,14 @@ def validate(df):
         ('region', regions, 's'),
         ('variable', variables, 's')
     ]
-
-    # add 'subannual' (wide format) or 'time' (long format) to list to validate
-    if 'time' in df.data.columns:
-        valid, passed, invalid = _validate_time_dt(df.data.time)
-        if passed:
-            df = swap_time_for_subannual(df)
-        else:
-            success = False
-            logger.warning(msg.format('entries in time column', invalid))
-
-
     if 'subannual' in df.data.columns:
         cols.append(('subannual', subannual, ' timeslices'))
 
+    # validate the time domain if a dataframe has continuous 'datetime' format
+    if df.time_col == 'time':
+        success = _validate_time_dt(df.data.time)
 
+    # validate all (other) columns
     for col, codelist, ext in cols:
         invalid = [c for c in df.data[col].unique() if c not in codelist]
 
@@ -192,12 +185,22 @@ def swap_time_for_subannual(df):
 
 
 def _validate_time_dt(x):
-    """Utility function to validate datetime and timezone format"""
-    valid_time, invalid_time, invalid = [], False, []
-    for e in x:
-        if type(e) == datetime and str(e.utcoffset()) == '1:00:00':
-            valid_time.append(e)
-        else:
-            invalid_time = True
-            invalid.append(str(e))
-    return valid_time, invalid_time, invalid
+    """Utility function to validate datetime format"""
+    if not all([isinstance(i, datetime) for i in x]):
+        logger.warning('Time domain is not given in `datetime` format!')
+        return False
+
+    return _validate_timezone(x)
+
+
+def _validate_timezone(x):
+    """Utility function to validate expected timezone format"""
+    tz_name = 'Central European time'
+    exp_tz = 'UTC+01:00'
+    exp_offset = timedelta(seconds=3600)
+
+    if all([t.tzname() == exp_tz or t.utcoffset() == exp_offset for t in x]):
+        return True
+    else:
+        logger.warning(f'Time domain is not given in {tz_name} ({exp_tz})!')
+        return False
