@@ -184,7 +184,8 @@ def _validate_subannual_dt(x):
     for (y, s) in x:
         try: # casting to Central European datetime
             string = ''.join(s.rsplit(':', 1))
-            valid_dt.append(datetime.strptime(f'{y}-{string}','%Y-%m-%d %H:%M%z'))
+            valid_dt.append(datetime.strptime(f'{y}-{string}',
+                                              '%Y-%m-%d %H:%M%z'))
         except ValueError:
             invalid_dt.add(s)
             passed = False
@@ -198,6 +199,3 @@ def _validate_directional(x):
     """Utility function to check whether region-to-region code is valid"""
     x = x.split('>')
     return len(x) == 2 and all([i in regions for i in x])
-
-
-
