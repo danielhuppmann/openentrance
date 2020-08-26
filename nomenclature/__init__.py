@@ -181,7 +181,7 @@ def _validate_subannual_dt(x):
     """Utility function to separate and validate datetime format"""
     valid_dt, invalid_dt, passed = [], set(), True
     for (y, s) in x:
-        try: # casting to Central European datetime
+        try:  # casting to Central European datetime
             string = ''.join(s.rsplit(':', 1))
             valid_dt.append(datetime.strptime(f'{y}-{string}',
                                               '%Y-%m-%d %H:%M%z'))
