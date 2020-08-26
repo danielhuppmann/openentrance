@@ -129,7 +129,6 @@ def validate(df):
             # downselect to any data that might be invalid
             data = df.filter(subannual=invalid)\
                 .data[['year', 'subannual']].drop_duplicates()
-            print(data)
             # call utility whether subannual can be cast to datetime
             invalid, success = _validate_subannual_dt(
                 list(zip(data['year'], data['subannual']))
