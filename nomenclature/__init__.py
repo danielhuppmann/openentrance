@@ -129,18 +129,11 @@ def validate(df):
             # downselect to any data that might be invalid
             data = df.filter(subannual=invalid)\
                 .data[['year', 'subannual']].drop_duplicates()
-
+            print(data)
             # call utility whether subannual can be cast to datetime
-            valid_dt, invalid_tz, invalid = _validate_subannual_dt(
+            invalid, success = _validate_subannual_dt(
                 list(zip(data['year'], data['subannual']))
             )
-
-            # verify that all datetime-instances have the correct timezone
-            if invalid_tz or \
-                    any([t.tzname() != 'UTC+01:00' for t in valid_dt]):
-                success = False
-                logger.warning('Time is not given in Central European time'
-                               ' (UTC+01:00)!')
 
         # check if any entries in the column are invalid and write to log
         if invalid:
@@ -172,27 +165,6 @@ def _validate_time_dt(x):
     return _validate_timezone(x)
 
 
-def _validate_subannual_dt(x):
-    """Utility function to separate and validate datetime format"""
-    valid_dt, invalid_tz, invalid = [], False, set()
-    for (y, s) in x:
-        try:  # casting to Central European datetime
-            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%z'))
-        except ValueError:
-            try:  # casting to UTC datetime
-                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M')
-                invalid_tz = True
-            except ValueError:  # if casting to datetime fails, return invalid
-                invalid.add(s)
-    return valid_dt, invalid_tz, list(invalid)
-
-
-def _validate_directional(x):
-    """Utility function to check whether region-to-region code is valid"""
-    x = x.split('>')
-    return len(x) == 2 and all([i in regions for i in x])
-
-
 def _validate_timezone(x):
     """Utility function to validate expected timezone format"""
     tz_name = 'Central European time'
@@ -204,3 +176,28 @@ def _validate_timezone(x):
     else:
         logger.warning(f'Time domain is not given in {tz_name} ({exp_tz})!')
         return False
+
+
+def _validate_subannual_dt(x):
+    """Utility function to separate and validate datetime format"""
+    valid_dt, invalid_dt, passed = [], set(), True
+    for (y, s) in x:
+        try: # casting to Central European datetime
+            string = ''.join(s.rsplit(':', 1))
+            valid_dt.append(datetime.strptime(f'{y}-{string}','%Y-%m-%d %H:%M%z'))
+        except ValueError:
+            invalid_dt.add(s)
+            passed = False
+    if passed:
+        passed = _validate_timezone(valid_dt)
+
+    return invalid_dt, passed
+
+
+def _validate_directional(x):
+    """Utility function to check whether region-to-region code is valid"""
+    x = x.split('>')
+    return len(x) == 2 and all([i in regions for i in x])
+
+
+
