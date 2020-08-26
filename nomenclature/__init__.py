@@ -150,27 +150,6 @@ def validate(df):
     return success
 
 
-def _validate_directional(x):
-    """Utility function to check whether region-to-region code is valid"""
-    x = x.split('>')
-    return len(x) == 2 and all([i in regions for i in x])
-
-
-def _validate_subannual_dt(x):
-    """Utility function to separate and validate datetime format"""
-    valid_dt, invalid_tz, invalid = [], False, set()
-    for (y, s) in x:
-        try:  # casting to Central European datetime
-            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%z'))
-        except ValueError:
-            try:  # casting to UTC datetime
-                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M')
-                invalid_tz = True
-            except ValueError:  # if casting to datetime fails, return invalid
-                invalid.add(s)
-    return valid_dt, invalid_tz, list(invalid)
-    
-    
 def swap_time_for_subannual(df):
     """Convert an IamDataFrame with `datetime` domain to `year + subannual`"""
     if df.time_col != 'time':
@@ -191,6 +170,27 @@ def _validate_time_dt(x):
         return False
 
     return _validate_timezone(x)
+
+
+def _validate_subannual_dt(x):
+    """Utility function to separate and validate datetime format"""
+    valid_dt, invalid_tz, invalid = [], False, set()
+    for (y, s) in x:
+        try:  # casting to Central European datetime
+            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%z'))
+        except ValueError:
+            try:  # casting to UTC datetime
+                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M')
+                invalid_tz = True
+            except ValueError:  # if casting to datetime fails, return invalid
+                invalid.add(s)
+    return valid_dt, invalid_tz, list(invalid)
+
+
+def _validate_directional(x):
+    """Utility function to check whether region-to-region code is valid"""
+    x = x.split('>')
+    return len(x) == 2 and all([i in regions for i in x])
 
 
 def _validate_timezone(x):
