@@ -125,10 +125,6 @@ def validate(df):
 
         # check if entries in the invalid list for subannual are datetime
         if col == 'subannual' and invalid:
-
-            # check if entries in subannual column are in the subannual dictionary
-            invalid = [i for i in invalid if i not in codelist]
-
             # downselect to any data that might be invalid
             data = df.filter(subannual=invalid)\
                 .data[['year', 'subannual']].drop_duplicates()
