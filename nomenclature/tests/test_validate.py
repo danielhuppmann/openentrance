@@ -52,8 +52,7 @@ def test_validate_subannual_datetime_as_subannual():
 
 
 def test_validate_time_entry():
-    df_sub = TEST_DF.rename(columns={'year':'subannual'}).\
+    df_sub = TEST_DF.rename(columns={'year': 'subannual'}).\
         replace([2005, 2010], value=['2005-06-17 00:00+01:00',
                                      '2010-07-21 12:00+01:00'])
     assert validate(IamDataFrame(df_sub))
-
