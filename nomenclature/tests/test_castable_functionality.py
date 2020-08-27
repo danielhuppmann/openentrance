@@ -14,7 +14,3 @@ df = IamDataFrame(TEST_DF)
 
 def test_validate_time_dt():
     assert _validate_time_dt(df.data.time)
-
-
-def test_validate_time_entry():
-    assert validate(df)

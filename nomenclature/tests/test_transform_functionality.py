@@ -16,8 +16,6 @@ def test_swap_time_for_subannual():
     obs = swap_time_for_subannual(df).data
     obs_year = list(obs['year'].values)
     obs_subannual = list(obs['subannual'].values)
-    print(obs_year)
-    print(obs_subannual)
     assert obs_year == [2005, 2010] and \
         obs_subannual == ['06-17 00:00+0100', '07-21 12:00+0100']
 
