@@ -126,6 +126,9 @@ def validate(df):
         # check if entries in the invalid list for subannual are datetime
         if col == 'subannual' and invalid:
 
+            # check if entries in subannual column are in the subannual dictionary
+            invalid = [i for i in invalid if i not in codelist]
+
             # downselect to any data that might be invalid
             data = df.filter(subannual=invalid)\
                 .data[['year', 'subannual']].drop_duplicates()
@@ -179,19 +182,24 @@ def _validate_timezone(x):
 
 def _validate_subannual_dt(x):
     """Utility function to separate and validate datetime format"""
-    valid_dt, invalid_dt, passed = [], set(), True
+    valid_dt, invalid_tz, invalid, success = [], False, set(), False
     for (y, s) in x:
         try:  # casting to Central European datetime
-            string = ''.join(s.rsplit(':', 1))
-            valid_dt.append(datetime.strptime(f'{y}-{string}',
-                                              '%Y-%m-%d %H:%M%z'))
+            valid_dt.append(datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M%z'))
         except ValueError:
-            invalid_dt.add(s)
-            passed = False
-    if passed:
-        passed = _validate_timezone(valid_dt)
+            try:  # casting to UTC datetime
+                datetime.strptime(f'{y}-{s}', '%Y-%m-%d %H:%M')
+                invalid_tz = True
+                logger.warning(
+                    f'Valid datetime format but without timezone given!')
 
-    return invalid_dt, passed
+            except ValueError:  # if casting to datetime fails, return invalid
+                invalid.add(s)
+
+    if _validate_timezone(valid_dt) and not invalid and not invalid_tz:
+        success = True
+
+    return list(invalid), success
 
 
 def _validate_directional(x):
